@@ -67,21 +67,37 @@ def scanLines(rhymedict):
 
                 lines_by_rhyme[rhyme].append(l)
 
-    return {k: v for k, v in lines_by_rhyme.iteritems() if len(v) > 3}
+    return {k: v for k, v in lines_by_rhyme.iteritems() if len(v) > 1}
 
 
 if __name__ == '__main__':
+    import sys
+
+    try:
+        rhyming = sys.argv[1]
+    except IndexError:
+        rhyming = 'aabba'
+
     rhymedict = CMUDict().word_table
 
     rhyming_lines = scanLines(rhymedict)
 
     rhymes = rhyming_lines.values()
-    a, b = random.sample(rhymes, 2)
 
-    a_lines = random.sample(a, 3)
-    b_lines = random.sample(b, 2)
+    ca = rhyming.count('a')
+    cb = rhyming.count('b')
+    a = random.choice([v for v in rhymes if len(v) > ca])
+    rhymes.remove(a)
+    b = random.choice([v for v in rhymes if len(v) > cb])
 
-    last = re.sub(r'\W*$', '', a_lines[-1])
+    a_lines = random.sample(a, ca)
+    b_lines = random.sample(b, cb)
+
+    poem = []
+    for c in rhyming:
+        poem.append(a_lines.pop(0) if c == 'a' else b_lines.pop(0))
+
+    last = re.sub(r'\W*$', '', poem[-1])
     punc = random.choice('!.?')
-    poem = a_lines[:2] + b_lines + [last + punc]
+    poem = poem[:-1] + [last + punc]
     print '\n'.join(poem)
