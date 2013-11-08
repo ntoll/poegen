@@ -1,6 +1,13 @@
 # London Python Dojo poetry generator
 
-Using Francis T Palgrave's *The Golden Treasury* and the Carnegie Mellon Pronouncing Dictionary this will make poetry.
+Using Francis T Palgrave's *The Golden Treasury* and the Carnegie Mellon
+Pronouncing Dictionary this will make poetry.
 
 Usage:
-poegen.sh [rhyme scheme] where rhyme scheme is some kind of ab structure e.g. aabba for a limerick.
+
+python poegen.py [<verse structure>, ...]
+
+where verse structure is a pattern of letters corresponding to rhyming lines
+e.g. aabba for a limerick.
+
+Multiple verses can be specified as multiple arguments.
