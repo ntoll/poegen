@@ -1,103 +1,128 @@
 import re
 import random
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 
-def make_limerick():
-    pass
-
-def rhyming_pair():
-    """CMU pronouncing dictionary"""
-    pass
-
-def random_place():
-    pass
-
-def random_thing():
-    pass
-
-class CMUDict:
-    def __init__(self):
-        self.cmup = CMUPhones()
-        self.read_from_file()
-
-    def read_from_file(self):
-        with open('cmudict.0.7a') as f:
-            all_phonemes = []
-            self.word_table = {}
-            for l in f:
-                l = l.strip()
-                l = re.sub(r'\d', '', l)
-                toks = l.strip().split()
-                word = toks[0]
-                phonemes = toks[1:]
-                phonemes.reverse()
-                curphon = []
-                for p in phonemes:
-                    curphon.append(p)
-                    if self.cmup.is_vowel(p):
-                        break
-                self.word_table[word] = tuple(curphon)
+PRONUNCIATION_DICT = 'cmudict.0.7a'
+POEM_LINES = 'lines.txt'
+PHONEME_TABLE = 'cmudict.0.7a.phones'
 
 
-class CMUPhones:
+def stripped_lines(fname):
+    """Iterate over the stripped, non-blank lines of fname."""
+    with open(fname) as f:
+        for l in f:
+            l = l.strip()
+            if l:
+                yield l
+
+
+def load_pronounciation_dict():
+    """Load a dictionary of word -> last sylable phonemes."""
+    phones = CMUPhones()
+    word_table = {}
+    for l in stripped_lines(PRONUNCIATION_DICT):
+        l = re.sub(r'\d', '', l)  # Strip phomeme stresses
+        toks = l.strip().split()
+        word = toks[0]
+        phonemes = toks[:0:-1]
+        curphon = []
+        for p in phonemes:
+            curphon.append(p)
+            if phones.is_vowel(p):
+                break
+        word_table[word] = tuple(curphon)
+    return word_table
+
+
+class CMUPhones(object):
+    """A table of phoneme types."""
     def __init__(self):
         self.read_phones()
 
     def read_phones(self):
-        with open('cmudict.0.7a.phones') as f:
-            self.phones = dict(l.strip().split() for l in f)
+        self.phones = dict(l.split() for l in stripped_lines(PHONEME_TABLE))
 
     def is_vowel(self, c):
         return self.phones.get(c) == 'vowel'
 
 
-def scanLines(rhymedict):
+def last_word(line):
+    """Return the last word in a line (stripping punctuation).
+
+    Raise ValueError if the last word cannot be identified.
+
+    """
+    mo = re.search(r"([\w']+)\W*$", line)
+    if mo:
+        w = mo.group(1)
+        w = re.sub(r"'d$", 'ed', w)  # expand old english contraction of -ed
+        return w.upper()
+    raise ValueError("No word in line.")
+
+
+def load_rhymes():
+    """Collect poem lines into groups of lines that all rhyme."""
+    rhymedict = load_pronounciation_dict()
     lines_by_rhyme = defaultdict(list)
-    with open('lines.txt') as f:
-        for l in f:
-            l = l.strip()
-            mo = re.search(r"([\w'-]+)\W*$", l)
-            if mo:
-                last_word = mo.group(1)
-                try:
-                    rhyme = rhymedict[last_word.upper()]
-                except KeyError:
-                    continue
+    for l in stripped_lines(POEM_LINES):
+        try:
+            rhyme = rhymedict[last_word(l)]
+        except (KeyError, ValueError):
+            continue
 
-                lines_by_rhyme[rhyme].append(l)
+        lines_by_rhyme[rhyme].append(l)
 
-    return {k: v for k, v in lines_by_rhyme.iteritems() if len(v) > 1}
+    return [ls for ls in lines_by_rhyme.itervalues() if len(ls) > 1]
+
+
+def terminate_poem(poem):
+    """Given a list of poem lines, fix the punctuation of the last line.
+
+    Removes any non-word characters and substitutes a random sentence
+    terminator - ., ! or ?.
+
+    """
+    last = re.sub(r'\W*$', '', poem[-1])
+    punc = random.choice('!.?')
+    return poem[:-1] + [last + punc]
+
+
+def build_poem(verse_pattern, rhymes):
+    """Build a poem given a verse pattern, eg aabbcaa.
+
+    Spaces are translated to paragraph breaks.
+
+    """
+    groups = Counter(verse_pattern.replace(' ', ''))
+
+    lines = {}
+
+    # Choose the lines to use
+    for k, c in groups.iteritems():
+        ls = random.choice([v for v in rhymes if len(v) > c])
+        lines[k] = random.sample(ls, c)
+        rhymes.remove(ls)
+
+    # Build the poem
+    poem = []
+    for k in verse_pattern:
+        if k == ' ':
+            if poem:
+                poem = terminate_poem(poem) + ['']
+        else:
+            poem.append(lines[k].pop())
+    return terminate_poem(poem)
 
 
 if __name__ == '__main__':
     import sys
 
     try:
-        rhyming = sys.argv[1]
+        verse_pattern = ' '.join(sys.argv[1:])
     except IndexError:
-        rhyming = 'aabba'
+        verse_pattern = 'aabba'
 
-    rhymedict = CMUDict().word_table
-
-    rhyming_lines = scanLines(rhymedict)
-
-    rhymes = rhyming_lines.values()
-
-    ca = rhyming.count('a')
-    cb = rhyming.count('b')
-    a = random.choice([v for v in rhymes if len(v) > ca])
-    rhymes.remove(a)
-    b = random.choice([v for v in rhymes if len(v) > cb])
-
-    a_lines = random.sample(a, ca)
-    b_lines = random.sample(b, cb)
-
-    poem = []
-    for c in rhyming:
-        poem.append(a_lines.pop(0) if c == 'a' else b_lines.pop(0))
-
-    last = re.sub(r'\W*$', '', poem[-1])
-    punc = random.choice('!.?')
-    poem = poem[:-1] + [last + punc]
+    rhymes = load_rhymes()
+    poem = build_poem(verse_pattern, rhymes)
     print '\n'.join(poem)
