@@ -88,13 +88,13 @@ def terminate_poem(poem):
     return poem[:-1] + [last + punc]
 
 
-def build_poem(verse_pattern, rhymes):
-    """Build a poem given a verse pattern, eg aabbcaa.
+def build_poem(rhyme_scheme, rhymes):
+    """Build a poem given a rhymne scheme, eg aabbcaa.
 
     Spaces are translated to paragraph breaks.
 
     """
-    groups = Counter(verse_pattern.replace(' ', ''))
+    groups = Counter(rhyme_scheme.replace(' ', ''))
 
     lines = {}
 
@@ -106,7 +106,7 @@ def build_poem(verse_pattern, rhymes):
 
     # Build the poem
     poem = []
-    for k in verse_pattern:
+    for k in rhyme_scheme:
         if k == ' ':
             if poem:
                 poem = terminate_poem(poem) + ['']
@@ -119,10 +119,10 @@ if __name__ == '__main__':
     import sys
 
     try:
-        verse_pattern = ' '.join(sys.argv[1:])
+        rhyme_scheme = ' '.join(sys.argv[1:])
     except IndexError:
-        verse_pattern = 'aabba'
+        rhyme_scheme = 'aabba'
 
     rhymes = load_rhymes()
-    poem = build_poem(verse_pattern, rhymes)
+    poem = build_poem(rhyme_scheme, rhymes)
     print '\n'.join(poem)
