@@ -5,9 +5,9 @@ Pronouncing Dictionary this will make poetry.
 
 Usage:
 
-python poegen.py [<rhyme scheme>, ...]
+python poegen.py [*rhyme scheme*, ...]
 
-where <rhyme scheme> is a pattern of letters corresponding to rhyming lines
+where *rhyme scheme* is a pattern of letters corresponding to rhyming lines
 e.g. aabba for a limerick.
 
 Multiple verses can be specified as multiple arguments.
