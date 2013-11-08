@@ -118,10 +118,7 @@ def build_poem(rhyme_scheme, rhymes):
 if __name__ == '__main__':
     import sys
 
-    try:
-        rhyme_scheme = ' '.join(sys.argv[1:])
-    except IndexError:
-        rhyme_scheme = 'aabba'
+    rhyme_scheme = ' '.join(sys.argv[1:]) or 'aabba'
 
     rhymes = load_rhymes()
     poem = build_poem(rhyme_scheme, rhymes)
