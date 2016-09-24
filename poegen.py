@@ -1,3 +1,10 @@
+"""
+Generates poetry on demand given a rhyming scheme and Palgraves Golden
+Treasury.
+
+Created by Dan Pope, Nicholas Tollervey, Hans Bolang and Jon Stutters.
+"""
+import sys
 import re
 import random
 from collections import defaultdict, Counter
@@ -9,7 +16,9 @@ PHONEME_TABLE = 'cmudict.0.7a.phones'
 
 
 def stripped_lines(fname):
-    """Iterate over the stripped, non-blank lines of fname."""
+    """
+    Iterate over the stripped, non-blank lines of fname.
+    """
     with open(fname) as f:
         for l in f:
             l = l.strip()
@@ -18,7 +27,9 @@ def stripped_lines(fname):
 
 
 def load_pronounciation_dict():
-    """Load a dictionary of word -> last sylable phonemes."""
+    """
+    Load a dictionary of word -> last sylable phonemes.
+    """
     phones = CMUPhones()
     word_table = {}
     for l in stripped_lines(PRONUNCIATION_DICT):
@@ -36,7 +47,9 @@ def load_pronounciation_dict():
 
 
 class CMUPhones(object):
-    """A table of phoneme types."""
+    """
+    A table of phoneme types.
+    """
     def __init__(self):
         self.read_phones()
 
@@ -48,10 +61,10 @@ class CMUPhones(object):
 
 
 def last_word(line):
-    """Return the last word in a line (stripping punctuation).
+    """
+    Return the last word in a line (stripping punctuation).
 
     Raise ValueError if the last word cannot be identified.
-
     """
     mo = re.search(r"([\w']+)\W*$", line)
     if mo:
@@ -62,7 +75,9 @@ def last_word(line):
 
 
 def load_rhymes():
-    """Collect poem lines into groups of lines that all rhyme."""
+    """
+    Collect poem lines into groups of lines that all rhyme.
+    """
     rhymedict = load_pronounciation_dict()
     lines_by_rhyme = defaultdict(list)
     for l in stripped_lines(POEM_LINES):
@@ -73,15 +88,15 @@ def load_rhymes():
 
         lines_by_rhyme[rhyme].append(l)
 
-    return [ls for ls in lines_by_rhyme.itervalues() if len(ls) > 1]
+    return [ls for ls in lines_by_rhyme.values() if len(ls) > 1]
 
 
 def terminate_poem(poem):
-    """Given a list of poem lines, fix the punctuation of the last line.
+    """
+    Given a list of poem lines, fix the punctuation of the last line.
 
     Removes any non-word characters and substitutes a random sentence
     terminator - ., ! or ?.
-
     """
     last = re.sub(r'\W*$', '', poem[-1])
     punc = random.choice('!.?')
@@ -89,17 +104,17 @@ def terminate_poem(poem):
 
 
 def build_poem(rhyme_scheme, rhymes):
-    """Build a poem given a rhymne scheme, eg aabbcaa.
+    """
+    Build a poem given a rhymne scheme, eg aabbcaa.
 
     Spaces are translated to paragraph breaks.
-
     """
     groups = Counter(rhyme_scheme.replace(' ', ''))
 
     lines = {}
 
     # Choose the lines to use
-    for k, c in groups.iteritems():
+    for k, c in groups.items():
         ls = random.choice([v for v in rhymes if len(v) > c])
         lines[k] = random.sample(ls, c)
         rhymes.remove(ls)
@@ -116,10 +131,7 @@ def build_poem(rhyme_scheme, rhymes):
 
 
 if __name__ == '__main__':
-    import sys
-
     rhyme_scheme = ' '.join(sys.argv[1:]) or 'aabba'
-
     rhymes = load_rhymes()
     poem = build_poem(rhyme_scheme, rhymes)
-    print '\n'.join(poem)
+    print('\n'.join(poem))
